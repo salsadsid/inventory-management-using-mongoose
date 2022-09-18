@@ -1,7 +1,9 @@
 const Product = require('../models/Product')
 
-exports.getProductsService = async () => {
-    const products = await Product.find({})
+exports.getProductsService = async (filters, queries) => {
+    const products = await Product.find(filters)
+        .select(queries.fields)
+        .sort(queries.sortBy)
     return products
 }
 exports.createProductService = async (data) => {
@@ -19,9 +21,23 @@ exports.updateAProductService = async (productId, data) => {
 
 exports.bulkUpdateProductService = async (data) => {
 
-    // const result = await Product.updateOne({ _id: productId }, { $set: data }, { runValidators: true })
-    const result = await Product.updateMany({ _id: data.ids }, { $set: data.data }, { runValidators: true })
-    // const product = await Product.findById(productId)
-    // const result = await product.set(data).save();
+    // const result = await Product.updateMany({ _id: data.ids }, { $set: data.data }, { runValidators: true })
+
+    const products = [];
+    data.ids.forEach(product => {
+        products.push(Product.updateOne({ _id: product.id }, product.data))
+    });
+
+    const result = await Promise.all(products)
+    return result
+}
+
+exports.deleteProductByIdService = async (id) => {
+    const result = await Product.deleteOne({ _id: id })
+    return result
+}
+
+exports.bulkDeleteProductService = async (ids) => {
+    const result = await Product.deleteMany({})
     return result
 }
