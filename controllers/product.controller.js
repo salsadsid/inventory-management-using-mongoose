@@ -35,6 +35,14 @@ exports.getProducts = async (req, res, next) => {
             queries.fields = fields
             // console.log(fields)
         }
+        if (req.query.page) {
+            const { page = 1, limit = 10 } = req.query;
+
+            const skip = (page - 1) * Number(limit);
+
+            queries.skip = skip;
+            queries.limit = Number(limit)
+        }
         const products = await getProductsService(filters, queries)
         res.status(200).json({
             status: "success",
