@@ -63,7 +63,6 @@ exports.createProduct = async (req, res, next) => {
         // const product = new Product(req.body)
         // const result = await product.save()
         // const product = new Product(req.body)
-        result.logger()
         // if (product.quantity == 0) {
         //   product.status = "out-of-stock"
         // }
@@ -161,5 +160,13 @@ exports.bulkDeleteProduct = async (req, res, next) => {
             message: "Can't delete the bulk data",
             error: error.message
         })
+    }
+}
+
+exports.fileUpload = async (req, res) => {
+    try {
+        res.status(200).json(req.files)
+    } catch (error) {
+
     }
 }
