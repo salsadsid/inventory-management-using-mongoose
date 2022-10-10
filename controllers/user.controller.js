@@ -1,10 +1,19 @@
 const { signupService, findUserByEmail } = require("../services/user.service")
+const { sendMailWithMailgun, sendMailWithGmail } = require("../utils/email")
 const { generateToken } = require("../utils/token")
 
 exports.signup = async (req, res, next) => {
     try {
         const user = await signupService(req.body)
 
+        const mailData = {
+            to: [user.email],
+            subject: "Verify your email",
+            text: "Your account has been hacked"
+        }
+
+        // sendMailWithMailgun(mailData)
+        sendMailWithGmail(mailData)
         res.status(200).json({
             status: "Success",
             message: "Successfully Sign Up"
@@ -86,6 +95,7 @@ exports.login = async (req, res, next) => {
 exports.getMe = async (req, res, next) => {
     try {
         const user = await findUserByEmail(req.user?.email)
+
         const { password: pwd, ...other } = user.toObject()
         res.status(200).json({
             status: "success",
