@@ -4,6 +4,7 @@ const verifyToken = require('../middleware/verifyToken');
 const router = express.Router();
 
 router.route('/signup').post(userController.signup)
+router.route('/signup/confirmation/:token').get(userController.confirmEmail)
 router.route('/login').post(userController.login)
 router.route('/me').get(verifyToken, userController.getMe)
 

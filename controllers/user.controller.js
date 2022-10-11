@@ -1,19 +1,21 @@
-const { signupService, findUserByEmail } = require("../services/user.service")
+const { signupService, findUserByEmail, findUserByToken } = require("../services/user.service")
 const { sendMailWithMailgun, sendMailWithGmail } = require("../utils/email")
 const { generateToken } = require("../utils/token")
 
 exports.signup = async (req, res, next) => {
     try {
         const user = await signupService(req.body)
-
+        const token = user.generateConfirmationToken();
+        await user.save({ validateBeforeSave: false })
         const mailData = {
             to: [user.email],
             subject: "Verify your email",
-            text: "Your account has been hacked"
+            text: `Your account has been hacked. Thank you for creating an account. Please confirm your account here: ${req.protocol}://${req.get("host")}${req.originalUrl}/confirmation/${token}`
         }
 
-        // sendMailWithMailgun(mailData)
-        sendMailWithGmail(mailData)
+
+        await sendMailWithMailgun(mailData)
+        // sendMailWithGmail(mailData)
         res.status(200).json({
             status: "Success",
             message: "Successfully Sign Up"
@@ -102,6 +104,44 @@ exports.getMe = async (req, res, next) => {
             user: other
         })
     } catch (error) {
+        res.status(500).json({
+            status: "Fail",
+            error,
+        })
+    }
+}
+
+exports.confirmEmail = async (req, res, next) => {
+    try {
+
+        const { token } = req.params
+        const user = await findUserByToken(token)
+
+        if (!user) {
+            return res.status(403).json({
+                status: "Fail",
+                error: "Invalid Token"
+            })
+        }
+        const expired = new Date() > new Date(user.confirmationTokenExpires)
+        if (expired) {
+            return res.status(401).json({
+                status: "Fail",
+                error: "Token Expired"
+            })
+        }
+        user.status = "active",
+            user.confirmationToken = undefined;
+        user.confirmationTokenExpires = undefined;
+
+        await user.save({ validateBeforeSave: false })
+
+        res.status(200).json({
+            status: "success",
+            message: "Successfully activate your account"
+        })
+    } catch (error) {
+        console.log(error);
         res.status(500).json({
             status: "Fail",
             error,
